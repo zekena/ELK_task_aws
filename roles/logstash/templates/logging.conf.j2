@@ -1,12 +1,13 @@
 input {
-    file {
-        path => "/var/log/apache-daily-access.log"
-        type => "apache"
+    tcp {
+        type => "logs"
+        codec => "json"
+        port => 5042
     }
 }
 
 output {
     elasticsearch {
-        hosts => ["{{ elasticsearch_host }}:9200"]
+        hosts => ["{{ master_host }}:9200", "{{ node_1_host }}:9200", "{{node_2_host}}:9200"]
     }
 }

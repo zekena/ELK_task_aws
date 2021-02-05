@@ -2,7 +2,7 @@
   apt: update_cache=yes
 
 - name: install
-  apt: name=elasticsearch 
+  apt: name=elasticsearch state=present
 
 - name: configure elasticsearch
   template: src=templates/elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml

@@ -1,0 +1,11 @@
+- name: update sources list
+  apt: update_cache=yes
+
+- name: install kibana
+  apt: name=kibana state=present
+
+- name: configure kibana
+  template: src=templates/kibana.yml.j2 dest=/etc/kibana/kibana.yml
+
+- name: start the server
+  service: name=kibana state=started enabled=yes
