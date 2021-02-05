@@ -1,0 +1,14 @@
+- name: update sources list
+  apt: update_cache=yes
+
+- name: install logstash
+  apt: name=logstash state=present
+
+- name: move log file
+  copy: src=files/apache-daily-access.log dest=/var/log/apache-daily-access.log mode='0755'
+
+- name: move logstash config file
+  template: src=templates/logging.conf.j2 dest=/etc/logstash/conf.d/logging.conf
+
+- name: start logstash
+  systemd: state=started name=logstash

@@ -1,0 +1,12 @@
+input {
+    file {
+        path => "/var/log/apache-daily-access.log"
+        type => "apache"
+    }
+}
+
+output {
+    elasticsearch {
+        hosts => ["{{ elasticsearch_host }}:9200"]
+    }
+}

@@ -1,0 +1,11 @@
+- name: install elasticsearch
+  apt: update_cache=yes
+
+- name: install
+  apt: name=elasticsearch 
+
+- name: configure elasticsearch
+  template: src=templates/elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
+
+- name: start the cluster
+  service: name=elasticsearch state=started enabled=yes

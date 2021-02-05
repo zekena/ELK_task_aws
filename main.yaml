@@ -1,0 +1,19 @@
+
+---
+- name: setting up
+  hosts: all
+  become: yes
+  roles: 
+    - elastic-repo
+    - elasticsearch
+    - logstash
+  # tasks:
+  # - name: place ssh keys
+  #   authorized_key:
+  #     user: es-master
+  #     key: https://github.com/zekena.keys
+
+  # - name: disable sudo pass
+  #   copy: 
+  #     dest: /etc/sudoers.d/es-master
+  #     content: "es-master ALL = NOPASSWD/: ALL"
