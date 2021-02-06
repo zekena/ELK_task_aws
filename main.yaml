@@ -1,19 +1,33 @@
 
 ---
-- name: setting up
+- name: setting up logstash
   hosts: all
   become: yes
+  vars:
+    node_name: "data-1"
   roles: 
     - elastic-repo
     - elasticsearch
     - logstash
-  # tasks:
-  # - name: place ssh keys
-  #   authorized_key:
-  #     user: es-master
-  #     key: https://github.com/zekena.keys
+  tags: logstash
 
-  # - name: disable sudo pass
-  #   copy: 
-  #     dest: /etc/sudoers.d/es-master
-  #     content: "es-master ALL = NOPASSWD/: ALL"
+- name: setting up kibana
+  hosts: all
+  become: yes
+  vars:
+    node_name: "data-2"
+  roles: 
+    - elastic-repo
+    - elasticsearch
+    - kibana
+  tags: kibana
+
+- name: setting up es-master
+  hosts: all
+  become: yes
+  vars:
+    node_name: "master"
+  roles: 
+    - elastic-repo
+    - elasticsearch
+  tags: es-master
