@@ -22,6 +22,22 @@ module "vpc" {
   }
 }
 
+resource "aws_security_group" "kibana" {
+  name        = "kibana-server"
+  description = "make the kibana server open for the public access"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress = {
+    from_port   = 5601
+    to_port     = 5601
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "Kibana-port"
+  }
+}
 resource "aws_security_group" "ssh" {
   name        = "default-ssh-example"
   description = "Security group for nat instances that allows SSH traffic from internet"
@@ -63,6 +79,10 @@ resource "aws_instance" "es-master" {
     }
   }
 
+  provisioner "local-exec" {
+    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_es_master}\" -t es-master main.yaml"
+  }
+
   subnet_id                   = element(module.vpc.public_subnets, 0)
   associate_public_ip_address = true
   private_ip                  = var.private_ip_es_master
@@ -85,6 +105,9 @@ resource "aws_instance" "logstash" {
     }
   }
 
+  provisioner "local-exec" {
+    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_logstash}\" -t logstash main.yaml"
+  }
   subnet_id                   = element(module.vpc.public_subnets, 0)
   associate_public_ip_address = true
   private_ip                  = var.private_ip_logstash
@@ -94,7 +117,7 @@ resource "aws_instance" "kibana" {
   ami             = "ami-0502e817a62226e03"
   instance_type   = "t2.micro"
   key_name        = var.private_key_path
-  security_groups = [aws_security_group.ssh.id]
+  security_groups = [aws_security_group.ssh.id, aws_security_group.kibana.id]
 
   provisioner "remote-exec" {
     inline = ["sudo apt update && sudo apt install python3 -y"]
@@ -105,6 +128,10 @@ resource "aws_instance" "kibana" {
       private_key = file(var.private_key_path)
       host        = aws_instance.kibana.public_ip
     }
+  }
+
+  provisioner "local-exec" {
+    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_kibana}\" -t kibana main.yaml"
   }
 
   subnet_id                   = element(module.vpc.public_subnets, 0)
