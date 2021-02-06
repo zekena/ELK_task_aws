@@ -27,7 +27,7 @@ resource "aws_security_group" "kibana" {
   description = "make the kibana server open for the public access"
   vpc_id      = module.vpc.vpc_id
 
-  ingress = {
+  ingress {
     from_port   = 5601
     to_port     = 5601
     protocol    = "tcp"
@@ -62,10 +62,15 @@ resource "aws_security_group" "ssh" {
   }
 }
 
+resource "aws_key_pair" "keys" {
+  key_name = "personal_key"
+  public_key = file(var.public_key_path)
+}
+
 resource "aws_instance" "es-master" {
-  ami             = "ami-0502e817a62226e03"
-  instance_type   = "t2.micro"
-  key_name        = var.private_key_path
+  ami             = var.ami
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.keys.key_name
   security_groups = [aws_security_group.ssh.id]
 
   provisioner "remote-exec" {
@@ -80,7 +85,7 @@ resource "aws_instance" "es-master" {
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_es_master}\" -t es-master main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.es-master.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_es_master}\" -t es-master main.yaml"
   }
 
   subnet_id                   = element(module.vpc.public_subnets, 0)
@@ -89,9 +94,9 @@ resource "aws_instance" "es-master" {
 }
 
 resource "aws_instance" "logstash" {
-  ami             = "ami-0502e817a62226e03"
-  instance_type   = "t2.micro"
-  key_name        = var.private_key_path
+  ami             = var.ami
+  instance_type   = var.instance_type
+  key_name        =  aws_key_pair.keys.key_name
   security_groups = [aws_security_group.ssh.id]
 
   provisioner "remote-exec" {
@@ -106,7 +111,7 @@ resource "aws_instance" "logstash" {
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_logstash}\" -t logstash main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.logstash.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_logstash}\" -t logstash main.yaml"
   }
   subnet_id                   = element(module.vpc.public_subnets, 0)
   associate_public_ip_address = true
@@ -116,7 +121,7 @@ resource "aws_instance" "logstash" {
 resource "aws_instance" "kibana" {
   ami             = "ami-0502e817a62226e03"
   instance_type   = "t2.micro"
-  key_name        = var.private_key_path
+  key_name        =  aws_key_pair.keys.key_name
   security_groups = [aws_security_group.ssh.id, aws_security_group.kibana.id]
 
   provisioner "remote-exec" {
@@ -131,7 +136,7 @@ resource "aws_instance" "kibana" {
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host=${var.private_ip_kibana}\" -t kibana main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.kibana.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_kibana}\" -t kibana main.yaml"
   }
 
   subnet_id                   = element(module.vpc.public_subnets, 0)
