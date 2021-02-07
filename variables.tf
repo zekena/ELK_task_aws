@@ -36,12 +36,12 @@ variable "public_subnets" {
 
 variable "public_key_path" {
   description = "public key in order to place it in the ec2 instance"
-  default = "/home/zkenawi/.ssh/id_rsa.pub"
+  default = "~/.ssh/Keypair.pub"
 }
 
 variable "private_key_path" {
   description = "private key path to connect without password"
-  default = "/home/zkenawi/.ssh/id_rsa"
+  default = "~/.ssh/Keypair"
 }
 
 variable "private_ip_es_master" {
