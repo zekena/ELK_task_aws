@@ -1,4 +1,3 @@
-elasticsearch.hosts:
-   - {{ master_host }}
-   - {{ node_1_host }}
-   - {{ node_2_host }}
+elasticsearch.hosts: ["http://{{ master_host }}:9200", "http://{{ node_1_host }}:9200", "http://{{ node_2_host }}:9200"]
+server.host: "{{ node_2_host }}"
+server.name: "{{ server_name }}"

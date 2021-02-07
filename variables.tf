@@ -46,17 +46,17 @@ variable "private_key_path" {
 
 variable "private_ip_es_master" {
   description = "private ip for es-master instance"
-  default = "10.0.0.4"
+  default = "10.0.0.9"
 }
 
 variable "private_ip_logstash" {
   description = "private ip for instance that has logstash and es-data"
-  default = "10.0.0.5"
+  default = "10.0.0.10"
 }
 
 variable "private_ip_kibana" {
   description = "private ip for instance that has kibana and es-data"
-  default = "10.0.0.6"
+  default = "10.0.0.11"
 }
 
 variable "ssh_user" {
