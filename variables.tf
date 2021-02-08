@@ -62,3 +62,7 @@ variable "private_ip_kibana" {
 variable "ssh_user" {
   default = "ubuntu"
 }
+
+variable "vault_password" {
+  default = "secret"
+}

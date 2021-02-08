@@ -1,0 +1,2 @@
+es_certs: "elastic-certificates.p12"
+http_cert: "http.p12"

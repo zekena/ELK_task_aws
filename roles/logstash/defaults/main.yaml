@@ -1,2 +1,1 @@
----
-elasticsearch_host: localhost
+logstash_conf: "/etc/logstash"

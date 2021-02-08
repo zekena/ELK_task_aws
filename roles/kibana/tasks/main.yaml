@@ -9,3 +9,11 @@
 
 - name: start the server
   service: name=kibana state=started enabled=yes
+
+- name: copy the certificate to connect with elasticsearch
+  copy: src=templates/{{ client_cert }} dest={{ kibana_cert_path }}/{{ client_cert }}
+
+- name: create a new certificate for browser connection
+  args:
+    chdir: '{{ kibana_cert_path }}'
+  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass ''"

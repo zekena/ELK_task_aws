@@ -1,11 +1,74 @@
-- name: install elasticsearch
+- name: update sources list
   apt: update_cache=yes
 
-- name: install
+- name: install elasticsearch
   apt: name=elasticsearch state=present
 
 - name: configure elasticsearch
   template: src=templates/elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
+
+- name: Create a certificate directory
+  file:
+    owner: root
+    group: '{{ es_group }}'
+    mode: u=rwx,g+rx,o-rwx
+    path: '{{ es_conf_dir }}/certs'
+    state: directory
+
+- name: copy certificates to elasticsearch
+  copy: src=files/ dest='{{ es_conf_dir }}/certs/'
+
+- name: create elasticsearch keystore
+  command: >
+   {{ es_home }}/bin/elasticsearch-keystore create
+  args:
+   creates: "{{ es_conf_dir }}/elasticsearch.keystore"
+  when: node_name == 'master'
+
+- name: Set elasticsearch keystore permissions
+  file: state=file path={{ es_conf_dir }}/elasticsearch.keystore owner={{ es_owner }} group={{ es_group }} mode='0600'
+  when: node_name == 'master'
+
+- name: Check if elasticsearch keystore is setup
+  command: >
+   {{ es_home }}/bin/elasticsearch-keystore list
+  register: list_keystore
+  changed_when: False
+  check_mode: no
+  when: node_name == 'master'
+
+- name: Create bootstrap password for elastic user
+  shell: echo "{{ es_api_basic_auth_password }}" | {{ es_home }}/bin/elasticsearch-keystore add -x 'bootstrap.password'
+  when: es_api_basic_auth_username is defined and list_keystore is defined and es_api_basic_auth_username == 'elastic' and 'bootstrap.password' not in list_keystore.stdout_lines[0] and node_name == 'master'
+  # no_log: true
+
+- name: restart elastic search
+  service: name=elasticsearch state=restarted
+
+- name: Update elastic user password
+  uri:
+   url: "http://{{ host_ip }}:9200/_security/user/elastic/_password"
+   method: POST
+   body_format: json
+   body: "{ \"password\":\"{{ elastic_password }}\" }"
+   status_code: 200
+   user: "{{es_api_basic_auth_username}}"
+   password: "{{es_api_basic_auth_password}}"
+   force_basic_auth: yes
+   validate_certs: no
+
+
+- name: Update Kibana user password
+  uri:
+   url: "http://{{ host_ip }}:9200/_security/user/kibana/_password"
+   method: POST
+   body_format: json
+   body: "{ \"password\":\"{{ kibana_password }}\" }"
+   status_code: 200
+   user: "{{es_api_basic_auth_username}}"
+   password: "{{ elastic_password }}"
+   force_basic_auth: yes
+   validate_certs:  no
 
 - name: start the cluster
   service: name=elasticsearch state=started enabled=yes

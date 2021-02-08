@@ -1,3 +1,8 @@
-elasticsearch.hosts: ["http://{{ master_host }}:9200", "http://{{ node_1_host }}:9200", "http://{{ node_2_host }}:9200"]
+elasticsearch.hosts: ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
 server.host: "{{ node_2_host }}"
-server.name: "{{ server_name }}"
+elasticsearch.username: "{{ kibana_username }}"
+elasticsearch.password: "{{ kibana_password }}"
+elasticsearch.ssl.certificateAuthorities: ["{{ kibana_cert_path }}/{{ client_cert }}"]
+server.ssl.enabled: true
+server.ssl.keystore.path: "{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12"
+server.ssl.keystore.password: ""
