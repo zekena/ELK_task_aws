@@ -9,6 +9,7 @@
     - elastic-repo
     - elasticsearch
     - logstash
+    - metricbeat
   tags: logstash
 
 - name: setting up kibana
@@ -20,6 +21,7 @@
     - elastic-repo
     - elasticsearch
     - kibana
+    - metricbeat
   tags: kibana
 
 - name: setting up es-master
@@ -30,4 +32,5 @@
   roles: 
     - elastic-repo
     - elasticsearch
+    - metricbeat
   tags: es-master

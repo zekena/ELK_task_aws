@@ -27,3 +27,4 @@ es_api_basic_auth_password: !vault |
           3134376262363037650a643366663035326331343230633737393938376335386434323231376464
           3434
 client_cert: elasticsearch-ca.pem
+http_cert: http.p12

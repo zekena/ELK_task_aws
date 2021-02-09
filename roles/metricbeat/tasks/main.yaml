@@ -1,0 +1,17 @@
+- name: update sources list
+  apt: update_cache=yes
+
+- name: install metricbeat
+  apt: name=metricbeat state=present
+
+- name: place metricbeat config yaml file
+  template: src=templates/metricbeat.yml.j2 dest={{ mb_conf_dir }}/metricbeat.yml
+
+- name: copy the certificate to connect with elasticsearch
+  copy: src=files/ dest={{ mb_conf_dir }}/
+
+- name: restart metricbeat
+  service: name=metricbeat state=restarted
+
+# - name: load dashboards
+#   command: "metricbeat setup --dashboards"

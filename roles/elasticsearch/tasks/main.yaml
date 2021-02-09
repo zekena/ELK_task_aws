@@ -90,3 +90,16 @@
    force_basic_auth: yes
    validate_certs:  no
   when: node_name == 'master'
+
+- name: Update remote_monitoring user password
+  uri:
+   url: "https://{{ host_ip }}:9200/_security/user/remote_monitoring_user/_password"
+   method: POST
+   body_format: json
+   body: "{ \"password\":\"{{ re_monitor_password }}\" }"
+   status_code: 200
+   user: "{{es_api_basic_auth_username}}"
+   password: "{{ elastic_password }}"
+   force_basic_auth: yes
+   validate_certs:  no
+  when: node_name == 'master'

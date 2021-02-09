@@ -1,0 +1,16 @@
+output.elasticsearch:
+  hosts: ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
+  username: "elastic"
+  password: "{{ elastic_password }}"
+  ssl.certificate_authorities: ["{{ mb_conf_dir }}/{{ client_cert }}"]
+metricbeat.modules:
+- module: elasticsearch
+  period: 10s
+  hosts: ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
+  username: "elastic"
+  password: "{{ elastic_password }}"
+  ssl.certificate_authorities: ["{{ mb_conf_dir }}/{{ client_cert }}"]
+  xpack.enabled: true
+
+# setup.kibana.host: "https://{{ node_2_host }}:5601"
+# setup.kibana.ssl.enabled: true
