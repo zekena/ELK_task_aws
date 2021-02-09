@@ -5,49 +5,69 @@
   apt: name=elasticsearch state=present
 
 - name: configure elasticsearch
-  template: src=templates/elasticsearch.yml.j2 dest=/etc/elasticsearch/elasticsearch.yml
+  template: src=templates/elasticsearch.yml-old.j2 dest=/etc/elasticsearch/elasticsearch.yml
+
+- name: start elasticsearch
+  service: name=elasticsearch state=started enabled=yes
 
 - name: Create a certificate directory
   file:
-    owner: root
+    owner: '{{ es_owner}}'
     group: '{{ es_group }}'
     mode: u=rwx,g+rx,o-rwx
     path: '{{ es_conf_dir }}/certs'
     state: directory
 
-- name: copy certificates to elasticsearch
-  copy: src=files/ dest='{{ es_conf_dir }}/certs/'
+- name: copy ca certificates to elasticsearch
+  copy: src=files/ dest='{{ es_conf_dir }}/certs/' owner='{{ es_owner }}' group='{{ es_group }}'
+
+- name: create node certificate
+  command: "{{ es_home }}/bin/elasticsearch-certutil cert --ca {{ es_conf_dir }}/certs/elastic-stack-ca.p12 --ip {{ host_ip }} --dns {{ host_dns }} --name {{ node_name }} --out {{ es_conf_dir }}/certs/{{ node_name }}-certificate.p12 --ca-pass '{{ ca_pass }}' --pass '{{ pass }}'"
+
+- name: change ownership of the certificate
+  file: path='{{ es_conf_dir }}/certs/{{ node_name }}-certificate.p12' owner='{{ es_owner }}'
+
+- name: configure elasticsearch
+  template: src=templates/elasticsearch.yml.j2 dest="{{ es_conf_dir }}/elasticsearch.yml"
+
+- name: restart elasticsearch
+  service: name=elasticsearch state=restarted
 
 - name: create elasticsearch keystore
-  command: >
-   {{ es_home }}/bin/elasticsearch-keystore create
+  command: "{{ es_home }}/bin/elasticsearch-keystore create"
   args:
    creates: "{{ es_conf_dir }}/elasticsearch.keystore"
+  environment:
+   ES_PATH_CONF: "{{ es_conf_dir }}"
+
   when: node_name == 'master'
 
 - name: Set elasticsearch keystore permissions
-  file: state=file path={{ es_conf_dir }}/elasticsearch.keystore owner={{ es_owner }} group={{ es_group }} mode='0600'
+  file: path="{{ es_conf_dir }}/elasticsearch.keystore" owner=root group='{{ es_group }}' mode='0600' state=file 
   when: node_name == 'master'
 
 - name: Check if elasticsearch keystore is setup
-  command: >
-   {{ es_home }}/bin/elasticsearch-keystore list
+  command: "{{ es_home }}/bin/elasticsearch-keystore list"
   register: list_keystore
   changed_when: False
+  environment:
+    ES_PATH_CONF: "{{ es_conf_dir }}"
   check_mode: no
   when: node_name == 'master'
 
 - name: Create bootstrap password for elastic user
   shell: echo "{{ es_api_basic_auth_password }}" | {{ es_home }}/bin/elasticsearch-keystore add -x 'bootstrap.password'
-  when: es_api_basic_auth_username is defined and list_keystore is defined and es_api_basic_auth_username == 'elastic' and 'bootstrap.password' not in list_keystore.stdout_lines[0] and node_name == 'master'
-  # no_log: true
+  when: node_name == 'master' and es_api_basic_auth_username is defined and list_keystore is defined and es_api_basic_auth_username == 'elastic' and 'bootstrap.password' not in list_keystore.stdout_lines
+  environment:
+    ES_PATH_CONF: "{{ es_conf_dir }}"
+  no_log: true
 
-- name: restart elastic search
+- name: restart elasticsearch
   service: name=elasticsearch state=restarted
 
 - name: Update elastic user password
   uri:
-   url: "http://{{ host_ip }}:9200/_security/user/elastic/_password"
+   url: "https://{{ host_ip }}:9200/_security/user/elastic/_password"
    method: POST
    body_format: json
    body: "{ \"password\":\"{{ elastic_password }}\" }"
@@ -56,11 +76,11 @@
    password: "{{es_api_basic_auth_password}}"
    force_basic_auth: yes
    validate_certs: no
-
+  when: node_name == 'master'
 
 - name: Update Kibana user password
   uri:
-   url: "http://{{ host_ip }}:9200/_security/user/kibana/_password"
+   url: "https://{{ host_ip }}:9200/_security/user/kibana_system/_password"
    method: POST
    body_format: json
    body: "{ \"password\":\"{{ kibana_password }}\" }"
@@ -69,6 +89,4 @@
    password: "{{ elastic_password }}"
    force_basic_auth: yes
    validate_certs:  no
-
-- name: start the cluster
-  service: name=elasticsearch state=started enabled=yes
+  when: node_name == 'master'

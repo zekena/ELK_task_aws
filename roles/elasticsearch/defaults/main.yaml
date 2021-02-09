@@ -1,2 +1,6 @@
 es_certs: "elastic-certificates.p12"
 http_cert: "http.p12"
+ca_pass: ""
+pass: ""
+key_size: 4096
+key_type: RSA

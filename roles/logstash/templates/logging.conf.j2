@@ -3,15 +3,18 @@ input {
         codec => "json"
         port => 5042
         ssl_enable => true
-        ssl_cert => '{{ logstash_conf }}/{{ client_cert }}'
-        ssl_key => '/etc/elasticsearch/certs/http.p12'
+        ssl_cert => '{{ logstash_conf }}/logstash.crt'
+        ssl_key =>  '{{ logstash_conf }}/logstash.pem'
     }
 }
 
 output {
     elasticsearch {
-        hosts => ["{{ master_host }}:9200", "{{ node_1_host }}:9200", "{{node_2_host}}:9200"]
+        hosts => ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
         ssl => true
         cacert =>  '{{ logstash_conf }}/{{ client_cert }}'
+        user => "elastic"
+        password => "{{ elastic_password }}"
+
     }
 }

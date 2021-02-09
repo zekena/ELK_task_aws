@@ -403,7 +403,7 @@ fi
 ssh-keygen -t rsa -b 2048 -f ~/.ssh/Keypair -q -P '';
 
 # Create vms and deploy application
-tf init;
-tf apply -auto-approve;
+terraform init;
+terraform apply -auto-approve;
 
 exit 0

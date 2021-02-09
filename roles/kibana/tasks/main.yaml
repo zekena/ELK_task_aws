@@ -7,13 +7,16 @@
 - name: configure kibana
   template: src=templates/kibana.yml.j2 dest=/etc/kibana/kibana.yml
 
-- name: start the server
-  service: name=kibana state=started enabled=yes
-
 - name: copy the certificate to connect with elasticsearch
-  copy: src=templates/{{ client_cert }} dest={{ kibana_cert_path }}/{{ client_cert }}
+  copy: src="templates/{{ client_cert }}" dest="{{ kibana_cert_path }}/{{ client_cert }}" owner=kibana group=kibana
 
 - name: create a new certificate for browser connection
   args:
     chdir: '{{ kibana_cert_path }}'
-  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass ''"
+  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass '{{ pass }}' --ca-pass '{{ ca_pass }}'"
+
+- name: edit ownership of the certificate
+  file: path="{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12" owner=kibana
+  
+- name: start the server
+  service: name=kibana state=started enabled=yes

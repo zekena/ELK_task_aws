@@ -8,7 +8,16 @@
   template: src=templates/logging.conf.j2 dest={{ logstash_conf }}/conf.d/logging.conf
 
 - name: copy the certificate to connect with elasticsearch
-  copy: src=templates/{{ client_cert }} dest={{ logstash_conf }}/{{ client_cert }}
+  copy: src=files/ dest={{ logstash_conf }}/ owner=logstash group=logstash
+
+- name: Generate openssl private key
+  openssl_privatekey: path="{{ logstash_conf }}/logstash.pem" size={{ key_size }} type={{ key_type }} owner=logstash
+
+- name: Generate openssl CSR
+  openssl_csr: path="{{ logstash_conf }}/logstash.csr" privatekey_path="{{ logstash_conf }}/logstash.pem" country_name=EE common_name=pipedrive-task.ee subject_alt_name="DNS:{{ host_dns }};IP:{{ host_ip }}"
+
+- name: Generate self-signed certificate
+  openssl_certificate: path="{{ logstash_conf }}/logstash.crt" privatekey_path="{{ logstash_conf }}/logstash.pem" csr_path="{{ logstash_conf }}/logstash.csr" provider=selfsigned owner=logstash
 
 - name: start logstash
   systemd: state=started name=logstash

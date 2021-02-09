@@ -136,10 +136,10 @@ resource "aws_instance" "es-master" {
   ami             = var.ami
   instance_type   = var.instance_type
   key_name        = aws_key_pair.keys.key_name
-  security_groups = [aws_security_group.ssh.id]
+  security_groups = [aws_security_group.ssh.id, aws_security_group.es-master.id]
 
   provisioner "remote-exec" {
-    inline = ["sudo apt update && sudo apt install python3 -y"]
+    inline = ["echo \"Trying to connect to remote\""]
 
     connection {
       type        = "ssh"
@@ -150,7 +150,7 @@ resource "aws_instance" "es-master" {
   }
 
   provisioner "local-exec" {
-    command = "ssh-keyscan -H ${aws_instance.es-master.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_es_master}\" --vault-password-file ${var.vault_password} -t es-master main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.es-master.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.es-master.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_es_master} host_dns=${aws_instance.es-master.private_dns}\" --vault-password-file ${var.vault_password} -t es-master main.yaml"
   }
 
   subnet_id                   = element(module.vpc.public_subnets, 0)
@@ -165,10 +165,10 @@ resource "aws_instance" "logstash" {
   ami             = var.ami
   instance_type   = var.instance_type
   key_name        = aws_key_pair.keys.key_name
-  security_groups = [aws_security_group.ssh.id]
+  security_groups = [aws_security_group.ssh.id, aws_security_group.logstash.id]
 
   provisioner "remote-exec" {
-    inline = ["sudo apt update && sudo apt install python3 -y"]
+    inline = ["echo \"Trying to connect to remote\""]
 
     connection {
       type        = "ssh"
@@ -179,7 +179,7 @@ resource "aws_instance" "logstash" {
   }
 
   provisioner "local-exec" {
-    command = "ssh-keyscan -H ${aws_instance.logstash.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.logstash.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_logstash}\" --vault-password-file ${var.vault_password} -t logstash main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.logstash.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.logstash.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_logstash} host_dns=${aws_instance.logstash.private_dns}\" --vault-password-file ${var.vault_password} -t logstash main.yaml"
   }
   subnet_id                   = element(module.vpc.public_subnets, 0)
   associate_public_ip_address = true
@@ -196,7 +196,7 @@ resource "aws_instance" "kibana" {
   security_groups = [aws_security_group.ssh.id, aws_security_group.kibana.id]
 
   provisioner "remote-exec" {
-    inline = ["sudo apt update && sudo apt install python3 -y"]
+    inline = ["echo \"Trying to connect to remote\""]
 
     connection {
       type        = "ssh"
@@ -207,7 +207,7 @@ resource "aws_instance" "kibana" {
   }
 
   provisioner "local-exec" {
-    command = "ssh-keyscan -H ${aws_instance.kibana.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.kibana.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_kibana}\" --vault-password-file ${var.vault_password} -t kibana main.yaml"
+    command = "ssh-keyscan -H ${aws_instance.kibana.public_ip} >> ~/.ssh/known_hosts;ansible-playbook -u ${var.ssh_user} -i ${aws_instance.kibana.public_ip}, --private-key ${var.private_key_path} --extra-vars \"master_host=${var.private_ip_es_master} node_1_host=${var.private_ip_logstash} node_2_host=${var.private_ip_kibana} host_ip=${var.private_ip_kibana} host_dns=${aws_instance.kibana.private_dns}\" --vault-password-file ${var.vault_password} -t kibana main.yaml"
   }
 
   subnet_id                   = element(module.vpc.public_subnets, 0)
