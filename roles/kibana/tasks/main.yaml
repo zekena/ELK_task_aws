@@ -13,7 +13,7 @@
 - name: create a new certificate for browser connection
   args:
     chdir: '{{ kibana_cert_path }}'
-    command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass '{{ pass }}' --ca-pass '{{ ca_pass }}' --ip '{{ host_ip }}' --dns '{{ host_dns }}'"
+  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass '{{ pass }}' --ca-pass '{{ ca_pass }}' --ip '{{ host_ip }}' --dns '{{ host_dns }}'"
 
 - name: edit ownership of the certificate
   file: path="{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12" owner=kibana
