@@ -11,6 +11,6 @@ metricbeat.modules:
   password: "{{ elastic_password }}"
   ssl.certificate_authorities: ["{{ mb_conf_dir }}/{{ client_cert }}"]
   xpack.enabled: true
-
+monitoring.enabled: true
 # setup.kibana.host: "https://{{ node_2_host }}:5601"
 # setup.kibana.ssl.enabled: true
