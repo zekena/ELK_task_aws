@@ -25,4 +25,6 @@ export TF_VAR_credintials=<credintials path>
 
 ## Run the install.sh script
 
-This script will install ansible and its dependencies, terraform, setup ssh keypair and will run the terraform commands which will deploy the infrastructure
+1- Run install.sh as sudo to install ansible and terraform. I used these two bash scripts https://github.com/neillturner/omnibus-ansible/ https://github.com/robertpeteuil/terraform-installer
+
+2- Run deploy.sh as the user to generate ssh keys and deploy the terraform with auto approve
