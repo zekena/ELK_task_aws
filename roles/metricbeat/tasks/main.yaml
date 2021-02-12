@@ -19,7 +19,3 @@
 
 - name: restart metricbeat
   service: name=metricbeat state=restarted
-
-- name: load dashboard
-  command: metricbeat setup --dashboards
-  when: node_name == 'data-2'
