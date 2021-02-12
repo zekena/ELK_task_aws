@@ -10,8 +10,16 @@
 - name: copy the certificate to connect with elasticsearch
   copy: src=files/ dest={{ mb_conf_dir }}/
 
+- name: uncomment a line that disable monitoring for elasticsearch
+  replace:
+    path: '{{ logstash_conf }}/logstash.yml'
+    regexp: '^#xpack.monitoring.enabled'
+    replace: 'xpack.monitoring.enabled'
+  when: node_name == 'data-1'
+
 - name: restart metricbeat
   service: name=metricbeat state=restarted
 
-# - name: load dashboards
-#   command: "metricbeat setup --dashboards"
+- name: load dashboard
+  command: metricbeat setup --dashboards
+  when: node_name == 'data-2'

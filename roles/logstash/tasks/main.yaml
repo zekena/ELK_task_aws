@@ -11,13 +11,22 @@
   copy: src=files/ dest={{ logstash_conf }}/ owner=logstash group=logstash
 
 - name: Generate openssl private key
-  openssl_privatekey: path="{{ logstash_conf }}/logstash.pem" size={{ key_size }} type={{ key_type }} owner=logstash
+  openssl_privatekey: path="{{ logstash_conf }}/logstash.key" size={{ key_size }} type={{ key_type }} owner=logstash group=logstash
 
 - name: Generate openssl CSR
-  openssl_csr: path="{{ logstash_conf }}/logstash.csr" privatekey_path="{{ logstash_conf }}/logstash.pem" country_name=EE common_name=pipedrive-task.ee subject_alt_name="DNS:{{ host_dns }};IP:{{ host_ip }}"
+  openssl_csr: path="{{ logstash_conf }}/logstash.csr" privatekey_path="{{ logstash_conf }}/logstash.key" country_name=EE common_name=pipedrive-task.ee subject_alt_name='DNS:{{ host_dns }};IP:{{ host_ip }}'
 
 - name: Generate self-signed certificate
-  openssl_certificate: path="{{ logstash_conf }}/logstash.crt" privatekey_path="{{ logstash_conf }}/logstash.pem" csr_path="{{ logstash_conf }}/logstash.csr" provider=selfsigned owner=logstash
+  openssl_certificate: path="{{ logstash_conf }}/logstash.pem" privatekey_path="{{ logstash_conf }}/logstash.key" csr_path="{{ logstash_conf }}/logstash.csr" provider=selfsigned owner=logstash group=logstash
+
+- name: Generate openssl private key for clients
+  openssl_privatekey: path="{{ logstash_conf }}/client.key" size={{ key_size }} type={{ key_type }}
+
+- name: Generate openssl CSR for clients
+  openssl_csr: path="{{ logstash_conf }}/client.csr" privatekey_path="{{ logstash_conf }}/client.key" country_name=EE common_name=pipedrive-task.ee subject_alt_name='DNS:{{ host_dns }};IP:{{ host_ip }}'
+
+- name: Generate client certificate signed by own ca
+  openssl_certificate: path="{{ logstash_conf }}/client.pem" privatekey_path="{{ logstash_conf }}/client.key" csr_path="{{ logstash_conf }}/client.csr" ownca_path="{{ logstash_conf }}/logstash.pem" ownca_privatekey_path="{{ logstash_conf }}/logstash.key" provider=ownca owner=logstash group=logstash
 
 - name: start logstash
   systemd: state=started name=logstash

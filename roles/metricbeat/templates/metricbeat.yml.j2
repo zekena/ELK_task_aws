@@ -1,16 +1,45 @@
 output.elasticsearch:
   hosts: ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
-  username: "elastic"
+  username: "{{ es_api_basic_auth_username }}"
   password: "{{ elastic_password }}"
   ssl.certificate_authorities: ["{{ mb_conf_dir }}/{{ client_cert }}"]
+monitoring.enabled: true
 metricbeat.modules:
 - module: elasticsearch
   period: 10s
   hosts: ["https://{{ master_host }}:9200", "https://{{ node_1_host }}:9200", "https://{{ node_2_host }}:9200"]
-  username: "elastic"
+  username: "{{ es_api_basic_auth_username }}"
   password: "{{ elastic_password }}"
   ssl.certificate_authorities: ["{{ mb_conf_dir }}/{{ client_cert }}"]
   xpack.enabled: true
-monitoring.enabled: true
-# setup.kibana.host: "https://{{ node_2_host }}:5601"
-# setup.kibana.ssl.enabled: true
+{% if node_name == 'data-2'%}
+- module: kibana
+  metricsets:
+    - stats
+  period: 10s
+  hosts: ["https://{{ node_2_host }}:5601"]
+  username: "{{ es_api_basic_auth_username }}"
+  password: "{{ elastic_password }}"
+  xpack.enabled: true
+  ssl.enabled: true
+  ssl.verification_mode: "none"
+  ssl.certificate: "{{ kibana_cert_path }}/{{ kibana_new_cert }}.pem"
+  ssl.key: "/etc/kibana/{{ kibana_new_cert }}.key"
+setup.dashboards.enabled: true
+setup.kibana:
+  host: "https://{{ node_2_host }}:5601"
+  ssl.enabled: true
+  ssl.certificate: "{{ kibana_cert_path }}/{{ kibana_new_cert }}.pem"
+  ssl.verification_mode: "none"
+  ssl.key: "/etc/kibana/{{ kibana_new_cert }}.key"
+  username: "{{ es_api_basic_auth_username }}"
+  password: "{{ elastic_password }}"
+{%elif node_name == 'data-1'%}
+- module: logstash
+  metricsets:
+    - node
+    - node_stats
+  period: 10s
+  hosts: ["http://localhost:9600"]
+  xpack.enabled: true
+{%endif%}

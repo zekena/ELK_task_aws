@@ -4,6 +4,8 @@ server.name: "{{ host_dns }}"
 elasticsearch.ssl.certificateAuthorities: ["{{ kibana_cert_path }}/{{ client_cert }}"]
 elasticsearch.username: "kibana_system"
 elasticsearch.password: "{{ kibana_password }}"
+xpack.security.session.idleTimeout: "1h"
+xpack.security.session.lifespan: "30d"
 server.ssl.enabled: true
 server.ssl.keystore.path: "{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12"
 server.ssl.keystore.password: ""

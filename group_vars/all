@@ -1,5 +1,7 @@
 ---
-kibana_username: kibana_system
+kibana_cert_path: /etc/kibana
+kibana_home: /usr/share/kibana
+kibana_new_cert: kibana-server
 kibana_password: !vault |
           $ANSIBLE_VAULT;1.1;AES256
           65653863623832333863626634303361323830373939356466303631316462313435623037616632
@@ -28,3 +30,4 @@ es_api_basic_auth_password: !vault |
           3434
 client_cert: elasticsearch-ca.pem
 http_cert: http.p12
+logstash_conf: "/etc/logstash"

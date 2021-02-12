@@ -11,12 +11,39 @@
   copy: src="templates/{{ client_cert }}" dest="{{ kibana_cert_path }}/{{ client_cert }}" owner=kibana group=kibana
 
 - name: create a new certificate for browser connection
+  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass '{{ pass }}' --dns '{{ host_dns }}' --ip '{{ host_ip }}'"
   args:
-    chdir: '{{ kibana_cert_path }}'
-  command: "'{{ es_home }}'/bin/elasticsearch-certutil cert -name '{{ kibana_new_cert }}' --out '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 --pass '{{ pass }}' --ca-pass '{{ ca_pass }}' --ip '{{ host_ip }}' --dns '{{ host_dns }}'"
+    creates: "'{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12"
+
+- name: parse pkcs12 and getting key
+  command: "openssl pkcs12 -password pass: -in '{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.p12 -nocerts -nodes -out '{{ kibana_cert_path }}'/'{{ kibana_new_cert }}'.key"
+  args:
+    creates: "'{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.key"
+
+- name: parse pkcs12 and getting certificate
+  command: "openssl pkcs12 -password pass: -in '{{ kibana_cert_path }}'/'{{ kibana_new_cert }}'.p12 -clcerts -nokeys -out '{{ kibana_cert_path }}'/'{{ kibana_new_cert }}'.pem"
+  args:
+    creates: "'{{ kibana_cert_path }}'/'{{ kibana_new_cert}}'.pem"
 
 - name: edit ownership of the certificate
-  file: path="{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12" owner=kibana
-  
+  file: path="{{ kibana_cert_path }}/{{ kibana_new_cert }}.p12" owner=kibana group=kibana
+
+- name: Update Kibana user password
+  uri:
+   url: "https://{{ master_host }}:9200/_security/user/kibana_system/_password"
+   method: POST
+   body_format: json
+   body: "{ \"password\":\"{{ kibana_password }}\" }"
+   status_code: 200
+   user: "{{ es_api_basic_auth_username }}"
+   password: "{{ elastic_password }}"
+   force_basic_auth: yes
+   validate_certs:  no
+
+- name: Create an api key
+  args:
+    chdir: "{{ kibana_home }}"
+  command: "./bin/kibana-encryption-keys generate --quiet >> '{{ kibana_cert_path }}'/kibana.yml"
+
 - name: start the server
   service: name=kibana state=started enabled=yes

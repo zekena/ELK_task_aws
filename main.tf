@@ -75,6 +75,18 @@ resource "aws_security_group" "logstash" {
     security_groups = [aws_security_group.ssh.id]
     to_port         = 9200
   }
+  ingress {
+    from_port       = 9600
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ssh.id]
+    to_port         = 9600
+  }
+  ingress {
+    from_port       = 5042
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ssh.id]
+    to_port         = 5042
+  }
 
   tags = {
     Name = "logstash-entry"
