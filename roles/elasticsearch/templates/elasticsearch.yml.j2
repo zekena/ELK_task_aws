@@ -1,11 +1,9 @@
 cluster.name: es-cluster
 node.name: "es-{{ node_name }}"
 {% if node_name != 'master' %}
-node.data: true
-node.ingest: true
+node.roles: [ data, ingest ]
 {% else %}
-node.data: false
-node.ingest: false
+node.roles: [ master, data ]
 cluster.initial_master_nodes: ["{{ host_ip }}"]
 {% endif %}
 network.host: {{ host_ip }}

@@ -41,9 +41,11 @@
    validate_certs:  no
 
 - name: Create an api key
-  args:
-    chdir: "{{ kibana_home }}"
-  command: "./bin/kibana-encryption-keys generate --quiet >> '{{ kibana_cert_path }}'/kibana.yml"
+  command: "{{ kibana_home }}/bin/kibana-encryption-keys generate --quiet"
+  register: encryption_keys
+
+- name: append the keys to the conf file
+  lineinfile: path="{{ kibana_cert_path }}/kibana.yml" insertafter=EOF line="{{ encryption_keys.stdout_lines | join('\n') }}"
 
 - name: start the server
   service: name=kibana state=started enabled=yes

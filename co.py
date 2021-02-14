@@ -1,25 +1,27 @@
 import socket
 import json
 import sys
+import ssl
 
-HOST = 'https://10.10.10.10'
-PORT =5042
+HOST = "10.0.0.10"
+PORT = 5042
 
-try:
-  sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-except socket.error as msg:
-  sys.stderr.write("[ERROR] %s\n" % msg[1])
-  sys.exit(1)
+ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+ctx.verify_mode = ssl.CERT_REQUIRED
+ctx.load_verify_locations("/etc/logstash/logstash.pem")
+ctx.load_cert_chain(
+    certfile="/etc/logstash/logstash.pem", keyfile="/etc/logstash/logstash.key"
+)
 
-try:
-  sock.connect((HOST, PORT))
-except socket.error as msg:
-  sys.stderr.write("[ERROR] %s\n" % msg[1])
-  sys.exit(2)
+csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-msg = {'@message': 'python test message', '@tags': ['python', 'test']}
+scsock = ctx.wrap_socket(csock)
+scsock.connect((HOST, PORT))
 
-sock.send(str(json.dumps(msg) ).encode('utf-8') )
+msg = {"@message": "python test message", "@tags": ["python", "test"]}
 
-sock.close()
+scsock.sendall(json.dumps(msg))
+scsock.send("\n")
+
+scsock.close()
 sys.exit(0)
