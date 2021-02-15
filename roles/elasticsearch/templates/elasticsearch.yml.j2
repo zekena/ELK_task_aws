@@ -3,7 +3,7 @@ node.name: "es-{{ node_name }}"
 {% if node_name != 'master' %}
 node.roles: [ data, ingest, remote_cluster_client ]
 {% else %}
-node.roles: [ master, data ]
+node.roles: [ master, data, remote_cluster_client  ]
 cluster.initial_master_nodes: ["{{ host_ip }}"]
 {% endif %}
 network.host: {{ host_ip }}
